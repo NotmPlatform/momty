@@ -1,4 +1,5 @@
 import os
+import re
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     ApplicationBuilder,
@@ -49,6 +50,31 @@ THANK_YOU_TEXT = """
 Пожалуйста, ожидайте ответа здесь.
 """
 
+PHONE_PROMPT_TEXT = """
+Если хотите, оставьте ваш номер телефона.
+
+Укажите номер в формате:
++7XXXXXXXXXX
+
+Пример:
++79991234567
+
+Если не хотите указывать номер — нажмите «Пропустить».
+"""
+
+PHONE_ERROR_TEXT = """
+Пожалуйста, укажите номер телефона в формате:
++7XXXXXXXXXX
+
+Пример:
++79991234567
+
+Или нажмите «Пропустить».
+"""
+
+def is_valid_phone(phone: str) -> bool:
+    return re.fullmatch(r"\+7\d{10}", phone) is not None
+
 # ===== Пользователь: старт =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.type != "private":
@@ -71,8 +97,7 @@ async def get_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["request_text"] = text
 
     await update.message.reply_text(
-        "Если хотите, оставьте ваш номер телефона.\n\n"
-        "Если не хотите указывать — нажмите «Пропустить».",
+        PHONE_PROMPT_TEXT,
         reply_markup=skip_keyboard
     )
     return PHONE
@@ -87,6 +112,13 @@ async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == SKIP_TEXT:
         context.user_data["phone"] = "Не указан"
     else:
+        if not is_valid_phone(text):
+            await update.message.reply_text(
+                PHONE_ERROR_TEXT,
+                reply_markup=skip_keyboard
+            )
+            return PHONE
+
         context.user_data["phone"] = text
 
     await update.message.reply_text(
