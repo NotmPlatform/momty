@@ -51,11 +51,9 @@ THANK_YOU_TEXT = """
 
 # ===== Пользователь: старт =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Бот работает с пользователем только в личке
     if update.effective_chat.type != "private":
         return
 
-    # очищаем старые данные формы
     context.user_data.clear()
 
     await update.message.reply_text(
@@ -134,7 +132,6 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=admin_text
     )
 
-    # сохраняем связь "сообщение в группе -> пользователь"
     reply_map = context.application.bot_data.setdefault("reply_map", {})
     reply_map[sent_message.message_id] = user.id
 
@@ -160,34 +157,28 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ===== Ответ модератора из группы =====
 async def handle_group_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # работаем только в нужной группе
     if update.effective_chat.id != GROUP_ID:
         return
 
     message = update.message
 
-    # если это не reply — игнорируем
     if not message.reply_to_message:
         return
 
     reply_to_id = message.reply_to_message.message_id
     reply_map = context.application.bot_data.setdefault("reply_map", {})
 
-    # если reply не на карточку клиента — игнорируем
     if reply_to_id not in reply_map:
         return
 
     user_id = reply_map[reply_to_id]
 
-    # не отправляем команды как ответ клиенту
     if message.text and message.text.startswith("/"):
         return
 
-    # поддержка текста
     if message.text:
         await context.bot.send_message(chat_id=user_id, text=message.text)
 
-    # поддержка фото
     elif message.photo:
         caption = message.caption if message.caption else ""
         await context.bot.send_photo(
@@ -196,7 +187,6 @@ async def handle_group_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             caption=caption
         )
 
-    # поддержка видео
     elif message.video:
         caption = message.caption if message.caption else ""
         await context.bot.send_video(
@@ -205,14 +195,12 @@ async def handle_group_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             caption=caption
         )
 
-    # поддержка голосовых
     elif message.voice:
         await context.bot.send_voice(
             chat_id=user_id,
             voice=message.voice.file_id
         )
 
-    # поддержка документов
     elif message.document:
         caption = message.caption if message.caption else ""
         await context.bot.send_document(
@@ -225,7 +213,6 @@ async def handle_group_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await message.reply_text("Этот тип ответа пока не поддерживается ботом.")
         return
 
-    # уведомление для модератора
     await message.reply_text("✅ Ответ отправлен пользователю.")
 
 def main():
@@ -245,12 +232,11 @@ def main():
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
+        allow_reentry=True,
     )
 
-    # Личная переписка с пользователем
     app.add_handler(conv_handler)
 
-    # Ответы модераторов из группы
     app.add_handler(
         MessageHandler(
             (filters.TEXT | filters.PHOTO | filters.VIDEO | filters.VOICE | filters.Document.ALL)
