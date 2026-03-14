@@ -2,8 +2,8 @@ import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = os.environ("BOT_TOKEN")
-GROUP_ID = int(os.environ("GROUP_ID"))
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+GROUP_ID = int(os.environ["GROUP_ID"])
 
 WELCOME_TEXT = """
 Привет! Я бот Momty 💛
@@ -35,7 +35,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=GROUP_ID,
             text=header + message.text
         )
-
     elif message.photo:
         caption = message.caption if message.caption else "Фото без подписи"
         await context.bot.send_photo(
@@ -43,7 +42,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=message.photo[-1].file_id,
             caption=header + caption
         )
-
     elif message.video:
         caption = message.caption if message.caption else "Видео без подписи"
         await context.bot.send_video(
@@ -51,14 +49,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             video=message.video.file_id,
             caption=header + caption
         )
-
     elif message.voice:
         await context.bot.send_voice(
             chat_id=GROUP_ID,
-            voice=message.voice.file_id,
-            caption=header + "Голосовое сообщение"
+            voice=message.voice.file_id
         )
-
+        await context.bot.send_message(
+            chat_id=GROUP_ID,
+            text=header + "Голосовое сообщение"
+        )
     elif message.document:
         caption = message.caption if message.caption else f"Документ: {message.document.file_name}"
         await context.bot.send_document(
@@ -66,7 +65,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             document=message.document.file_id,
             caption=header + caption
         )
-
     else:
         await context.bot.send_message(
             chat_id=GROUP_ID,
