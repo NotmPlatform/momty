@@ -2,8 +2,8 @@ import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-GROUP_ID = int(os.environ["GROUP_ID"])
+BOT_TOKEN = os.environ("BOT_TOKEN")
+GROUP_ID = int(os.environ("GROUP_ID"))
 
 WELCOME_TEXT = """
 Привет! Я бот Momty 💛
